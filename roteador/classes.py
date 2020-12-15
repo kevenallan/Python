@@ -13,7 +13,7 @@ class Roteador:
         self.__ips_em_uso=[]
         self.__jobs_finalizados=[]
     #LISTANDO TODOS OS PCS CADASTRADOS
-    def get_lista_pcs(self):
+    '''def get_lista_pcs(self):
         if len(self.__lista_pcs)==0:
             raise ListaException('Nenhnum computador foi cadastrado!')
         try:
@@ -23,23 +23,32 @@ class Roteador:
                 print('Prioritario: {}'.format(pc.get_prioritario()))
                 print()
         except:
-            raise
+            raise'''
     #LISTANDO TODOS OS PCS QUE ESTAO NA LISTA DE JOBS
     def get_lista_pcs_job(self):
         if len(self.__jobs)==0:
-            raise ListaException('Nenhnum job cadastrado!')
+            raise ListaException('Não há nenhum computador realizando job!')
         try:
+            print('Computadores que estão realizando algum job:')
             for job in self.__jobs:
-                print(job.get_computador().get_nome())
-                print(job.get_computador().get_ip())
-                print(job.get_banda_larga())
+                print(f'''
+                Computador:                 {job.get_computador().get_nome()}
+                Ip:                         {job.get_computador().get_ip()}
+                Prioritario:                {job.get_computador().get_prioritario()}
+                Banda larga:                {job.get_banda_larga()}
+                Kbs baixados:               {job.get_kbBaixados()}
+                Tamanho total do arquivo:   {job.get_recurso().get_tamanho()} Kbs
+                ''')
         except:
             raise
-
+    def get_banda_larga(self):
+        return self.__banda_larga
+        
     def get_lista_recursos(self):
         if len(self.__lista_recursos) == 0:
             raise ListaException('Nenhnum recursos foi cadastrado!')
         try:
+            print('Recursos Cadastrados:')
             for recurso in self.__lista_recursos:
                 print('Nome do arquivo: {}'.format(recurso.get_nome()))
                 print('Tamanho do arquivo: {} KBs'.format(recurso.get_tamanho()))
@@ -51,8 +60,11 @@ class Roteador:
             print(job)
 
     def set_banda_larga(self,nova_banda):
+        banda_antiga=self.__banda_larga
         self.__banda_larga=nova_banda
-        self.distribuir_banda_larga()
+        print(f'{banda_antiga} Mgs de Banda larga alterado para {self.__banda_larga} Mgs ')
+        if len(self.__jobs)!=0:
+            self.distribuir_banda_larga()
     
     def set_jobs_finalizados(self,novo_job):
         self.__jobs_finalizados.append(novo_job)
@@ -65,22 +77,22 @@ class Roteador:
         self.__ips_em_uso.append(ip)
         self.__lista_pcs.append(pc)
         return '''
-Computador cadastrado com sucesso!
-Nome: {}
-Ip: {}
-Prioritário: {}'''.format(pc.get_nome(),pc.get_ip(),pc.get_prioritario())
+                Computador cadastrado com sucesso!
+                Nome: {}
+                Ip: {}
+                Prioritário: {}
+                '''.format(pc.get_nome(),pc.get_ip(),pc.get_prioritario())
 
     def cadastrar_recurso(self,recurso):
         for recurso_cadastrado in self.__lista_recursos:
             if recurso_cadastrado.get_nome()==recurso.get_nome():
-                print('Esse recurso já está cadastrado!')
-                return
+                return 'Esse recurso já está cadastrado!'
         self.__lista_recursos.append(recurso)
         return '''
-Recurso cadastrado com sucesso!
-Nome: {}
-Tamanho: {} KBs
-'''.format(recurso.get_nome(),recurso.get_tamanho())
+                Recurso cadastrado com sucesso!
+                Nome: {}
+                Tamanho: {} KBs
+                '''.format(recurso.get_nome(),recurso.get_tamanho())
 
     def adicionar_job(self,nome_pc,nome_rec):
         job=[]
@@ -101,19 +113,22 @@ Tamanho: {} KBs
             print('Job adicionado com sucesso!')
 
     def remover_job(self,nome_pc):
-        job_removido=None
-        for indice,job in enumerate(self.__jobs):
-            if job.get_computador().get_nome()==nome_pc:
-                job_removido=indice
-                self.__jobs.pop(indice)
-                return 'Job retirado da lista!'
-        if job_removido==None:
-            raise ListaException('Dado informado não existe.')
-        if len(self.__jobs)==0:
-            return
-        else:
-            self.distribuir_banda_larga()
-    ############################################################ NAO FUNCIONA #########################################################
+        try:
+            job_removido=None
+            for indice,job in enumerate(self.__jobs):
+                if job.get_computador().get_nome()==nome_pc:
+                    job_removido=indice
+                    self.__jobs.pop(indice)
+            
+            if job_removido==None:
+                return 'Computador inválido.'
+            else:
+                self.distribuir_banda_larga()
+                return 'Computador retirado da lista de jobs.'
+        except:
+            raise ListaException('Não há mais nenhum job na lista')
+
+    
     def distribuir_banda_larga(self):
         contador_prioritarios=0
         quantidade_pcs=len(self.__jobs)
@@ -195,36 +210,64 @@ Tamanho: {} KBs
         if len(self.__jobs)==0:
             raise ListaException('Não há nenhum job cadastrado para poder iniciar a simulação.')
         else:
-            x=len(self.__jobs)
-            while len(self.__jobs)!=0:
-                for job in self.__jobs:
-                    if job.get_computador().get_prioritario()=='s':
-                        kbs=job.get_kbBaixados()+(job.get_banda_larga()*100)
-                        job.set_kbBaixados(kbs)
-                        job.set_ciclos(job.get_ciclos()+1)
-                    elif job.get_computador().get_prioritario()=='n':
-                        kbs=job.get_kbBaixados()+(job.get_banda_larga()*100)
-                        job.set_kbBaixados(kbs)
-                        job.set_ciclos(job.get_ciclos()+1)
-                    
-                    baixado=job.get_kbBaixados()
-                    tamanho=job.get_recurso().get_tamanho()
-                    baixado=int(baixado)
-                    tamanho=int(tamanho)
-
-                    if baixado>=tamanho:
-                        nome_pc=job.get_computador().get_nome()
-                        self.set_jobs_finalizados(job)
-                        self.remover_job(nome_pc)
+            print('Pressione CTRL+C para pausar a simulação')
+            time.sleep(1)
+            try:
+                x=len(self.__jobs)
+                while len(self.__jobs)!=0:
+                    for job in self.__jobs:
+                        if job.get_computador().get_prioritario()=='s':
+                            kbs=job.get_kbBaixados()+(job.get_banda_larga()*100)
+                            job.set_kbBaixados(kbs)
+                            job.set_ciclos(job.get_ciclos()+1)
+                        elif job.get_computador().get_prioritario()=='n':
+                            kbs=job.get_kbBaixados()+(job.get_banda_larga()*100)
+                            job.set_kbBaixados(kbs)
+                            job.set_ciclos(job.get_ciclos()+1)
                         
+                        baixado=job.get_kbBaixados()
+                        tamanho=job.get_recurso().get_tamanho()
+                        baixado=int(baixado)
+                        tamanho=int(tamanho)
 
-                    print(f''' 
+                        if baixado>=tamanho:
+                            if len(self.__jobs)==1:
+                                print(f''' 
+                        Computador: {job.get_computador().get_nome()}
+                        Tamanho total do arquivo: {tamanho}
+                        Progresso kBs: {baixado}
+                        ciclos: {job.get_ciclos()}
+                        Kb/s : {job.get_banda_larga()*100}''')
+                                nome_pc=job.get_computador().get_nome()
+                                job.set_kbBaixados(job.get_recurso().get_tamanho())
+                                self.set_jobs_finalizados(job)
+                                self.remover_job(nome_pc)
+                            else:
+                                nome_pc=job.get_computador().get_nome()
+                                job.set_kbBaixados(job.get_recurso().get_tamanho())
+                                self.set_jobs_finalizados(job)
+                                self.remover_job(nome_pc)
+                        
+                        print(f''' 
+                        Computador: {job.get_computador().get_nome()}
+                        Tamanho total do arquivo: {tamanho}
+                        Progresso kBs: {baixado}
+                        ciclos: {job.get_ciclos()}
+                        Kb/s : {job.get_banda_larga()*100}
+                        ''')
+                        time.sleep(0.5)
+
+            except KeyboardInterrupt:
+                print('Simulação pausada...')
+                for job in self.__jobs:
+                    print(f'''
                     Computador: {job.get_computador().get_nome()}
-                    Tamanho total do arquivo: {tamanho}
-                    Progresso kBs: {baixado}
+                    Tamanho total do arquivo: {job.get_recurso().get_tamanho()}
+                    Progresso kBs: {job.get_kbBaixados()}
                     ciclos: {job.get_ciclos()}
-                    Kb/s : {kbs}
-                    ''')
+                    ''')    
+
+
     def exibir_jobs_finalizados(self):
         if len(self.__jobs_finalizados)==0:
             print('Nenhum job foi finalizado ainda.')
@@ -236,8 +279,9 @@ Tamanho: {} KBs
                 Prioritario :       {}
                 Recurso :           {}
                 Tamanho do recurso: {}
+                Tamanho do baixado: {}
                 Numero de ciclos:   {}
-                '''.format(job.get_computador().get_nome(),job.get_computador().get_ip(),job.get_computador().get_prioritario(),job.get_recurso().get_nome(),job.get_recurso().get_tamanho(),job.get_ciclos()))
+                '''.format(job.get_computador().get_nome(),job.get_computador().get_ip(),job.get_computador().get_prioritario(),job.get_recurso().get_nome(),job.get_recurso().get_tamanho(),job.get_kbBaixados(),job.get_ciclos()))
 class Computador:
     def __init__(self,nome,ip,prioritario):
         self.__nome=nome

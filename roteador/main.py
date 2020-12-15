@@ -3,12 +3,14 @@ from random import randint
 import time 
 
 roteador=Roteador()
-
+print()
+print(f'''Por padrão o roteador iniciou com banda larga de {roteador.get_banda_larga()} Mgs.
+Escolha a opção 11 caso queira alterar.''')
 while True:
     print ('''
         01. Cadastrar computadores.
         02. Exportar dados/Importar.
-        03. Listar computadores.
+        03. Listar computadores que estão realizando job.
         04. Cadastrar recursos.
         05. Listar Recursos.
         06. Inserir jobs 2 para processamento (download).
@@ -44,17 +46,15 @@ while True:
         elif op=='2':
             try: 
                 roteador.importar()
+            except ListaException as li:
+                print(li)
+            try: 
                 roteador.importar_recursos()
             except ListaException as li:
                 print(li)
         else:
             print('Opção inválida!')
     elif op=='03' or op=='3':
-        try:
-            roteador.get_lista_pcs()
-        except ListaException as li:
-            print(li)
-        print('Computadores que estão em JOB')
         try:
             roteador.get_lista_pcs_job()
         except ListaException as li:
@@ -95,7 +95,7 @@ while True:
         roteador.exibir_jobs_finalizados()
     
     elif op=='10':
-        print('Povoando automaticamente...')
+        print('Povoando automaticamente.')
         pc1=Computador('IFPB01','192.168.30.31','s')
         pc2=Computador('IFPB05','192.168.30.01','s')
         pc3=Computador('IFPB10','192.168.30.55','s')
@@ -107,10 +107,10 @@ while True:
         pc9=Computador('IFPB18','192.168.30.05','n')
         pc10=Computador('IFPB02','192.168.30.10','n')
         rec1=Recurso('documento1.doc',1500)
-        rec2=Recurso('teste.py',150)
-        rec3=Recurso('projeto.js',150)
-        rec4=Recurso('horarios.txt',150)
-        rec5=Recurso('ifpb.png',150)
+        rec2=Recurso('teste.py',1000)
+        rec3=Recurso('projeto.js',5000)
+        rec4=Recurso('horarios.txt',700)
+        rec5=Recurso('ifpb.png',9000)
         roteador.cadastrar_pc(pc1)
         roteador.cadastrar_pc(pc2)
         roteador.cadastrar_pc(pc3)
